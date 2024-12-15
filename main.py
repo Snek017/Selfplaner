@@ -2,12 +2,10 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime, timedelta
 import json
-import os
-from pystray import Icon as icon, MenuItem as item, Menu
-from PIL import Image, ImageDraw
+import requests
 
-# JSON-Dateipfad
-DATA_FILE = "todo_data.json"
+# Server-URL
+SERVER_URL = "http://45.133.9.62:5000"  # Ersetze mit deiner Server-IP
 
 # Datenstrukturen
 tasks = {"today": [], "tomorrow": [], "day_after": []}
@@ -23,12 +21,55 @@ rewards = [
 inventory = []
 recurring_tasks = []
 redemption_history = {}
-completed_recurring_tasks = {"today": [], "tomorrow": [], "day_after": []}  # Status für abgehakte wiederkehrende Aufgaben
+completed_recurring_tasks = {"today": [], "tomorrow": [], "day_after": []}
 
 # Farben für Darkmode
 BG_COLOR = "#121212"
 FG_COLOR = "#ffffff"
 BTN_COLOR = "#1f1f1f"
+
+# Server-Kommunikationsfunktionen
+def upload_to_server():
+    """Lädt die JSON-Daten direkt auf den Server hoch."""
+    try:
+        data = {
+            "tasks": tasks,
+            "points": points,
+            "inventory": inventory,
+            "recurring_tasks": recurring_tasks,
+            "redemption_history": redemption_history,
+            "completed_recurring_tasks": completed_recurring_tasks
+        }
+        headers = {"Content-Type": "application/json"}  # JSON-Header setzen
+        response = requests.post(f"{SERVER_URL}/update_json", json=data, headers=headers)
+
+        # Fehler überprüfen
+        if response.status_code == 200:
+            print(response.json()["message"])
+        else:
+            print(f"Fehler beim Hochladen: {response.status_code} - {response.text}")
+    except Exception as e:
+        print(f"Fehler beim Hochladen: {e}")
+
+
+def download_from_server():
+    """Lädt die JSON-Daten direkt vom Server herunter."""
+    global tasks, points, inventory, recurring_tasks, redemption_history, completed_recurring_tasks
+    try:
+        response = requests.get(f"{SERVER_URL}/get_json")
+        if response.status_code == 200:
+            data = response.json()
+            tasks = data.get("tasks", tasks)
+            points = data.get("points", 0)
+            inventory = data.get("inventory", [])
+            recurring_tasks = data.get("recurring_tasks", [])
+            redemption_history = data.get("redemption_history", {})
+            completed_recurring_tasks = data.get("completed_recurring_tasks", completed_recurring_tasks)
+            print("Datei erfolgreich heruntergeladen!")
+        else:
+            print(f"Fehler: {response.json().get('error', 'Unbekannter Fehler')}")
+    except Exception as e:
+        print(f"Fehler beim Herunterladen: {e}")
 
 # Hilfsfunktionen für Datumsberechnung
 def get_date_labels():
@@ -41,27 +82,14 @@ def get_date_labels():
 
 # Datenbank-Funktionen
 def save_data():
-    with open(DATA_FILE, "w") as file:
-        json.dump({
-            "tasks": tasks,
-            "points": points,
-            "inventory": inventory,
-            "recurring_tasks": recurring_tasks,
-            "redemption_history": redemption_history,
-            "completed_recurring_tasks": completed_recurring_tasks
-        }, file)
+    """Speichert die Daten direkt auf dem Server."""
+    upload_to_server()
 
 def load_data():
-    global tasks, points, inventory, recurring_tasks, redemption_history, completed_recurring_tasks
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r") as file:
-            data = json.load(file)
-            tasks.update(data.get("tasks", tasks))
-            points = data.get("points", 0)
-            inventory.extend(data.get("inventory", []))
-            recurring_tasks.extend(data.get("recurring_tasks", []))
-            redemption_history.update(data.get("redemption_history", {}))
-            completed_recurring_tasks.update(data.get("completed_recurring_tasks", completed_recurring_tasks))
+    """Lädt die Daten direkt vom Server."""
+    download_from_server()
+
+load_data()
 
 # Globale Variable für ausgewählten Tag
 selected_day = "today"
