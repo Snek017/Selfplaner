@@ -3,13 +3,19 @@ from tkinter import ttk, messagebox
 from datetime import datetime, timedelta
 import json
 import requests
+import time
 
 # Server-URL
-SERVER_URL = "http://45.133.9.62:5000"  # Ersetze mit deiner Server-IP
+SERVER_URL = "http://45.133.9.62:5000"
 
 # Datenstrukturen
 tasks = {"today": [], "tomorrow": [], "day_after": []}
 points = 0
+inventory = []
+recurring_tasks = []
+redemption_history = {}
+completed_recurring_tasks = {"today": [], "tomorrow": [], "day_after": []}
+
 rewards = [
     {"name": "Red Bull", "cost": 15},
     {"name": "Placeholder", "cost": 15},
@@ -18,19 +24,37 @@ rewards = [
     {"name": "1 Snus kaufen", "cost": 100},
     {"name": "5 Snus kaufen", "cost": 500}
 ]
-inventory = []
-recurring_tasks = []
-redemption_history = {}
-completed_recurring_tasks = {"today": [], "tomorrow": [], "day_after": []}
 
 # Farben für Darkmode
 BG_COLOR = "#121212"
 FG_COLOR = "#ffffff"
 BTN_COLOR = "#1f1f1f"
 
-# Server-Kommunikationsfunktionen
+# Hilfsfunktion: JSON laden mit Wiederholung
+def fetch_json_with_retry(url, retries=3, delay=2):
+    for attempt in range(retries):
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            print("Antwort vom Server (Raw):", response.text)  # Debugging
+            return response.json()  # JSON-Daten parsen
+        except json.JSONDecodeError as e:
+            print(f"JSON-Dekodierungsfehler: {e}")
+            if attempt < retries - 1:
+                print(f"Erneuter Versuch in {delay} Sekunden...")
+                time.sleep(delay)
+            else:
+                raise
+        except requests.RequestException as e:
+            print(f"Verbindungsfehler: {e}")
+            if attempt < retries - 1:
+                print(f"Erneuter Versuch in {delay} Sekunden...")
+                time.sleep(delay)
+            else:
+                raise
+
+# Server-Funktionen
 def upload_to_server():
-    """Lädt die JSON-Daten direkt auf den Server hoch."""
     try:
         data = {
             "tasks": tasks,
@@ -40,36 +64,33 @@ def upload_to_server():
             "redemption_history": redemption_history,
             "completed_recurring_tasks": completed_recurring_tasks
         }
-        headers = {"Content-Type": "application/json"}  # JSON-Header setzen
-        response = requests.post(f"{SERVER_URL}/update_json", json=data, headers=headers)
-
-        # Fehler überprüfen
+        headers = {"Content-Type": "application/json"}
+        response = requests.post(f"{SERVER_URL}/api/update_json", json=data, headers=headers)
         if response.status_code == 200:
-            print(response.json()["message"])
+            print("Upload erfolgreich:", response.json().get("message", "Keine Nachricht"))
         else:
             print(f"Fehler beim Hochladen: {response.status_code} - {response.text}")
     except Exception as e:
         print(f"Fehler beim Hochladen: {e}")
 
-
 def download_from_server():
-    """Lädt die JSON-Daten direkt vom Server herunter."""
     global tasks, points, inventory, recurring_tasks, redemption_history, completed_recurring_tasks
     try:
-        response = requests.get(f"{SERVER_URL}/get_json")
-        if response.status_code == 200:
-            data = response.json()
-            tasks = data.get("tasks", tasks)
-            points = data.get("points", 0)
-            inventory = data.get("inventory", [])
-            recurring_tasks = data.get("recurring_tasks", [])
-            redemption_history = data.get("redemption_history", {})
-            completed_recurring_tasks = data.get("completed_recurring_tasks", completed_recurring_tasks)
-            print("Datei erfolgreich heruntergeladen!")
-        else:
-            print(f"Fehler: {response.json().get('error', 'Unbekannter Fehler')}")
+        data = fetch_json_with_retry(f"{SERVER_URL}/api/get_json")
+        tasks = data.get("tasks", tasks)
+        points = data.get("points", 0)
+        inventory = data.get("inventory", [])
+        recurring_tasks = data.get("recurring_tasks", [])
+        redemption_history = data.get("redemption_history", {})
+        completed_recurring_tasks = data.get("completed_recurring_tasks", completed_recurring_tasks)
+        print("Daten erfolgreich heruntergeladen!")
     except Exception as e:
         print(f"Fehler beim Herunterladen: {e}")
+
+# Datenbank-Initialisierung
+download_from_server()
+
+# Starte die App (Rest des Codes bleibt gleich)
 
 # Hilfsfunktionen für Datumsberechnung
 def get_date_labels():
