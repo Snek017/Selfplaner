@@ -122,19 +122,7 @@ def create_image():
     dc.rectangle([16, 16, 48, 48], fill="white")
     return image
 
-def minimize_to_tray():
-    root.withdraw()
-    tray_icon = icon("To-Do App", create_image(), menu=Menu(item("Öffnen", restore_window), item("Beenden", exit_app)))
-    tray_icon.run()
 
-def restore_window(icon, item):
-    icon.stop()
-    root.deiconify()
-
-def exit_app(icon, item):
-    icon.stop()
-    save_data()
-    root.destroy()
 
 # Aufgaben-Funktionen
 def add_task():
@@ -375,5 +363,4 @@ update_recurring_task_list()
 update_inventory()
 update_redemption_history()
 update_points()
-root.protocol("WM_DELETE_WINDOW", minimize_to_tray)
 root.mainloop()
