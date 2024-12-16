@@ -1,0 +1,57 @@
+{
+  "tasks": {
+    "today": [
+      {
+        "name": "awd",
+        "completed": true
+      },
+      {
+        "name": "dsa",
+        "completed": true
+      },
+      {
+        "name": "ggg",
+        "completed": true
+      }
+    ],
+    "tomorrow": [],
+    "day_after": []
+  },
+  "points": 15,
+  "inventory": [],
+  "recurring_tasks": [],
+  "rewards": [
+    {
+      "name": "1 Redbull",
+      "cost": 15
+    },
+    {
+      "name": "1 Pack Chips",
+      "cost": 30
+    },
+    {
+      "name": "3 Pack Snus",
+      "cost": 150
+    },
+    {
+      "name": "5 Pack Snus",
+      "cost": 280
+    },
+    {
+      "name": "Gelber Schein",
+      "cost": 500
+    },
+    {
+      "name": "10 Pack Snus",
+      "cost": 1000
+    }
+  ],
+  "redemption_history": {
+    "1 Redbull": 1
+  },
+  "completed_recurring_tasks": {
+    "today": [],
+    "tomorrow": [],
+    "day_after": []
+  }
+}

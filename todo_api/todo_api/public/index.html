@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <h1>To-Do App</h1>
+        <p class="subtitle">Manage tasks, earn points, and redeem rewards!</p>
+    </header>
+
+    <!-- Punkte-Anzeige -->
+    <div class="points-container">
+        <h2 id="points-display">Points: 0</h2>
+    </div>
+
+    <!-- Datums-Buttons -->
+    <div class="date-buttons">
+        <button id="today-button" class="date-button">Today</button>
+        <button id="tomorrow-button" class="date-button">Tomorrow</button>
+        <button id="day-after-button" class="date-button">Day After</button>
+    </div>
+
+    <!-- Hauptbereich -->
+    <main class="main-container">
+        <!-- Aufgaben-Bereich -->
+        <section class="tasks-container card">
+            <h2>Tasks</h2>
+            <div id="tasks-list" class="tasks-list"></div>
+            <div class="task-input">
+                <input type="text" id="new-task" placeholder="Add a new task">
+                <button id="add-task-button" class="primary-button">Add Task</button>
+            </div>
+        </section>
+
+        <!-- Recurring Tasks -->
+        <section class="recurring-container card">
+            <h2>Recurring Tasks</h2>
+            <div id="recurring-list" class="recurring-list"></div>
+            <div class="task-input">
+                <input type="text" id="new-recurring-task" placeholder="Add a recurring task">
+                <button id="add-recurring-button" class="primary-button">Add Recurring Task</button>
+            </div>
+        </section>
+
+        <!-- Unfinished Tasks -->
+        <section class="unfinished-container card">
+            <h2>Unfinished Tasks</h2>
+            <div id="unfinished-list" class="unfinished-list"></div>
+        </section>
+
+        <!-- Shop-Bereich -->
+        <section class="shop-container card">
+            <h2>Shop</h2>
+            <div id="shop-list" class="shop-list"></div>
+        </section>
+
+	<!-- Inventory Section -->
+	<section class="inventory-container card">
+    		<h2>Inventory</h2>
+    		<div id="inventory-list" class="inventory-list"></div>
+	</section>
+
+	<!-- Redemption History Section -->
+	<section class="history-container card">
+    		<h2>Redemption History</h2>
+    		<div id="redemption-history" class="redemption-history"></div>
+	</section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

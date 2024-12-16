@@ -1,14 +1,15 @@
-import tkinter as tk
-from tkinter import ttk, messagebox
-from datetime import datetime, timedelta
 import json
 import requests
 import time
+from datetime import datetime, timedelta
+import tkinter as tk
+from tkinter import ttk
+from tkinter import messagebox
 
 # Server-URL
 SERVER_URL = "http://45.133.9.62:5000"
 
-# Datenstrukturen
+# Globale Variablen
 tasks = {"today": [], "tomorrow": [], "day_after": []}
 points = 0
 inventory = []
@@ -16,44 +17,43 @@ recurring_tasks = []
 redemption_history = {}
 completed_recurring_tasks = {"today": [], "tomorrow": [], "day_after": []}
 
-rewards = [
-    {"name": "Red Bull", "cost": 15},
-    {"name": "Placeholder", "cost": 15},
-    {"name": "Placeholder", "cost": 30},
-    {"name": "Placeholder", "cost": 50},
-    {"name": "1 Snus kaufen", "cost": 100},
-    {"name": "5 Snus kaufen", "cost": 500}
-]
-
 # Farben für Darkmode
 BG_COLOR = "#121212"
 FG_COLOR = "#ffffff"
 BTN_COLOR = "#1f1f1f"
 
-# Hilfsfunktion: JSON laden mit Wiederholung
+
+# Hilfsfunktion: JSON-Daten mit Wiederholung laden
 def fetch_json_with_retry(url, retries=3, delay=2):
     for attempt in range(retries):
         try:
             response = requests.get(url)
             response.raise_for_status()
-            print("Antwort vom Server (Raw):", response.text)  # Debugging
-            return response.json()  # JSON-Daten parsen
-        except json.JSONDecodeError as e:
-            print(f"JSON-Dekodierungsfehler: {e}")
+            return response.json()
+        except (json.JSONDecodeError, requests.RequestException) as e:
             if attempt < retries - 1:
-                print(f"Erneuter Versuch in {delay} Sekunden...")
                 time.sleep(delay)
             else:
-                raise
-        except requests.RequestException as e:
-            print(f"Verbindungsfehler: {e}")
-            if attempt < retries - 1:
-                print(f"Erneuter Versuch in {delay} Sekunden...")
-                time.sleep(delay)
-            else:
-                raise
+                raise e
 
-# Server-Funktionen
+# Daten vom Server laden
+rewards = []  # Globale Variable für Rewards
+
+def download_from_server():
+    global tasks, points, inventory, recurring_tasks, redemption_history, completed_recurring_tasks, rewards
+    try:
+        data = fetch_json_with_retry(f"{SERVER_URL}/api/get_json")
+        tasks = data.get("tasks", {"today": [], "tomorrow": [], "day_after": []})
+        points = data.get("points", 0)
+        inventory = data.get("inventory", [])
+        recurring_tasks = data.get("recurring_tasks", [])
+        redemption_history = data.get("redemption_history", {})
+        completed_recurring_tasks = data.get("completed_recurring_tasks", {"today": [], "tomorrow": [], "day_after": []})
+        rewards = data.get("rewards", [])
+    except Exception as e:
+        messagebox.showerror("Fehler beim Herunterladen", f"Fehler: {str(e)}")
+
+
 def upload_to_server():
     try:
         data = {
@@ -66,29 +66,66 @@ def upload_to_server():
         }
         headers = {"Content-Type": "application/json"}
         response = requests.post(f"{SERVER_URL}/api/update_json", json=data, headers=headers)
-        if response.status_code == 200:
-            print("Upload erfolgreich:", response.json().get("message", "Keine Nachricht"))
-        else:
-            print(f"Fehler beim Hochladen: {response.status_code} - {response.text}")
+        if response.status_code != 200:
+            raise Exception(f"Fehler beim Hochladen: {response.status_code} - {response.text}")
     except Exception as e:
-        print(f"Fehler beim Hochladen: {e}")
+        messagebox.showerror("Fehler beim Upload", str(e))
 
-def download_from_server():
-    global tasks, points, inventory, recurring_tasks, redemption_history, completed_recurring_tasks
-    try:
-        data = fetch_json_with_retry(f"{SERVER_URL}/api/get_json")
-        tasks = data.get("tasks", tasks)
-        points = data.get("points", 0)
-        inventory = data.get("inventory", [])
-        recurring_tasks = data.get("recurring_tasks", [])
-        redemption_history = data.get("redemption_history", {})
-        completed_recurring_tasks = data.get("completed_recurring_tasks", completed_recurring_tasks)
-        print("Daten erfolgreich heruntergeladen!")
-    except Exception as e:
-        print(f"Fehler beim Herunterladen: {e}")
+# Aufgabenverwaltung
+def toggle_task(index, day):
+    """Schaltet den Status einer Aufgabe um und aktualisiert die Punkte."""
+    global points
+    task = tasks[day][index]
+    task["completed"] = not task["completed"]
+    points += 5 if task["completed"] else -5
+
+def toggle_recurring_task(name, day):
+    """Markiert eine wiederkehrende Aufgabe als abgeschlossen."""
+    if name not in completed_recurring_tasks[day]:
+        completed_recurring_tasks[day].append(name)
+        global points
+        points += 5
+
+# Unerledigte Aufgaben aktualisieren
+def update_uncompleted_tasks():
+    """Sammelt alle unerledigten Aufgaben aus allen Tagen."""
+    uncompleted = []
+    for day_key, day_tasks in tasks.items():
+        for task in day_tasks:
+            if not task["completed"]:
+                uncompleted.append({"name": task["name"], "day": day_key})
+    return uncompleted
+
+# Inventar und Belohnungen
+def redeem_reward(reward):
+    """Belohnung einlösen, wenn genügend Punkte vorhanden sind."""
+    global points, inventory
+    if points >= reward["cost"]:
+        points -= reward["cost"]
+        inventory.append(reward["name"])
+    else:
+        messagebox.showwarning("Zu wenig Punkte", "Nicht genug Punkte!")
+
+def redeem_inventory_item(item_name):
+    """Ein Item aus dem Inventar einlösen."""
+    if item_name in inventory:
+        inventory.remove(item_name)
+        redemption_history[item_name] = redemption_history.get(item_name, 0) + 1
+        messagebox.showinfo("Einlösen", f"'{item_name}' wurde eingelöst!")
+
+# Wiederkehrende Aufgaben
+def add_recurring_task(task_name):
+    """Fügt eine neue wiederkehrende Aufgabe hinzu."""
+    recurring_tasks.append({"name": task_name})
+
+def delete_recurring_task(task_name):
+    """Entfernt eine wiederkehrende Aufgabe."""
+    global recurring_tasks
+    recurring_tasks = [task for task in recurring_tasks if task["name"] != task_name]
 
 # Datenbank-Initialisierung
 download_from_server()
+
 
 # Starte die App (Rest des Codes bleibt gleich)
 
@@ -124,14 +161,14 @@ def create_image():
 
 
 
-# Aufgaben-Funktionen
 def add_task():
     task_name = task_entry.get().strip()
     if task_name:
         tasks[selected_day].append({"name": task_name, "completed": False})
         update_task_list()
         task_entry.delete(0, tk.END)
-        save_data()
+        upload_to_server()  # Änderungen sofort synchronisieren
+
 
 def delete_task():
     selected = task_list.curselection()
@@ -143,15 +180,37 @@ def delete_task():
 def toggle_task(index):
     global points
     task = tasks[selected_day][index]
-    if not task["completed"]:
-        task["completed"] = True
-        points += 5
+    task["completed"] = not task["completed"]
+    points += 5 if task["completed"] else -5
     update_task_list()
     update_points()
-    save_data()
+    upload_to_server()  # Änderungen sofort synchronisieren
+
 
 def update_task_list():
+    """Aktualisiert die Aufgabenliste basierend auf dem ausgewählten Tag."""
+    # Liste löschen, um sicherzustellen, dass keine alten Einträge vorhanden sind
     task_list.delete(0, tk.END)
+    root.update_idletasks()  # Erzwinge sofortige visuelle Aktualisierung
+
+    # Reguläre Aufgaben in die Liste einfügen
+    for task in tasks[selected_day]:
+        status = "[x] " if task["completed"] else "[ ] "
+        task_list.insert(tk.END, status + task["name"])
+
+    # Wiederkehrende Aufgaben hinzufügen
+    for task in recurring_tasks:
+        if task["name"] not in completed_recurring_tasks[selected_day]:
+            task_list.insert(tk.END, "[ ] " + task["name"])
+
+    # Sicherstellen, dass keine weiteren Renderings ausstehen
+    root.update_idletasks()
+
+def reload_data():
+    download_from_server()  # Neueste Daten abrufen
+    update_task_list()  # Aufgabenliste aktualisieren
+    update_inventory()  # Inventar aktualisieren
+    update_points()  # Punkte aktualisieren
 
     # Reguläre Aufgaben in die Liste einfügen
     for i, task in enumerate(tasks[selected_day]):
@@ -186,18 +245,19 @@ def update_points():
     points_label.config(text=f"Punkte: {points}")
 
 def update_task_list():
-    task_list.delete(0, tk.END)
+    """Aktualisiert die Aufgabenliste basierend auf dem ausgewählten Tag."""
+    task_list.delete(0, tk.END)  # Alle bestehenden Einträge löschen
 
     # Reguläre Aufgaben in die Liste einfügen
-    for i, task in enumerate(tasks[selected_day]):
+    for task in tasks[selected_day]:
         status = "[x] " if task["completed"] else "[ ] "
         task_list.insert(tk.END, status + task["name"])
 
     # Wiederkehrende Aufgaben in die Liste einfügen
-    for i, task in enumerate(recurring_tasks):
-        is_completed = task["name"] in completed_recurring_tasks[selected_day]
-        status = "[x] " if is_completed else "[ ] "
-        task_list.insert(tk.END, status + task["name"])
+    for task in recurring_tasks:
+        if task["name"] not in completed_recurring_tasks[selected_day]:
+            task_list.insert(tk.END, "[ ] " + task["name"])
+
 
     # Doppelklick-Event für reguläre und wiederkehrende Aufgaben
     def toggle_combined_task(event):
@@ -256,9 +316,10 @@ def redeem_reward(reward):
         inventory.append(reward["name"])
         update_points()
         update_inventory()
-        save_data()
+        upload_to_server()  # Änderungen sofort synchronisieren
     else:
         messagebox.showwarning("Zu wenig Punkte", "Nicht genug Punkte!")
+
 
 def update_inventory():
     inventory_list.delete(0, tk.END)
@@ -266,24 +327,26 @@ def update_inventory():
         inventory_list.insert(tk.END, item)
 
 def update_redemption_history():
-    redemption_list.delete(0, tk.END)
+    redemption_list.delete(0, tk.END)  # Listbox leeren
     for item, count in redemption_history.items():
         redemption_list.insert(tk.END, f"{item}: {count}x eingelöst")
+
 
 def redeem_inventory_item():
     selected = inventory_list.curselection()
     if selected:
-        item_name = inventory.pop(selected[0])
-        redemption_history[item_name] = redemption_history.get(item_name, 0) + 1
-        update_inventory()
-        update_redemption_history()
-        save_data()
+        item_name = inventory.pop(selected[0])  # Item aus dem Inventar entfernen
+        redemption_history[item_name] = redemption_history.get(item_name, 0) + 1  # History aktualisieren
+        update_inventory()  # Inventar aktualisieren
+        update_redemption_history()  # Anzeige aktualisieren
+        save_data()  # Daten speichern
         messagebox.showinfo("Einlösen", f"'{item_name}' wurde eingelöst!")
+
 
 # Hauptfenster
 root = tk.Tk()
 root.title("To-Do App")
-root.geometry("500x450")
+root.geometry("500x450")  # Kompaktes Fenster
 root.configure(bg=BG_COLOR)
 
 # Darkmode für Tabs
@@ -291,76 +354,108 @@ style = ttk.Style()
 style.theme_use("default")
 style.configure("TNotebook", background=BG_COLOR)
 style.configure("TNotebook.Tab", background=BTN_COLOR, foreground=FG_COLOR, padding=[5, 2])
-style.map("TNotebook.Tab", background=[("selected", BTN_COLOR)], foreground=[("selected", FG_COLOR)])
+style.map("TNotebook.Tab", background=[("selected", "#333333")], foreground=[("selected", "#ffffff")])
 
 # Tabs
 notebook = ttk.Notebook(root)
-notebook.pack(expand=1, fill="both")
+notebook.pack(expand=1, fill="both", padx=5, pady=5)
 
-# Tab 1: Kalender & Aufgaben
-calendar_tab = tk.Frame(notebook, bg=BG_COLOR)
-notebook.add(calendar_tab, text="Kalender & Aufgaben")
-date_labels = get_date_labels()
-day_frame = tk.Frame(calendar_tab, bg=BG_COLOR)
-day_frame.pack()
-
-for i, day_key in enumerate(["today", "tomorrow", "day_after"]):
-    tk.Button(day_frame, text=date_labels[i], command=lambda d=day_key: select_day(d),
-              bg=BTN_COLOR, fg=FG_COLOR).pack(side=tk.LEFT, padx=5)
+# Funktion: Tag auswählen
+selected_day = "today"
 
 def select_day(day_key):
+    """Wechselt den ausgewählten Tag und aktualisiert die Aufgabenliste."""
     global selected_day
     selected_day = day_key
     update_task_list()
 
-task_entry = tk.Entry(calendar_tab, width=30, bg=BTN_COLOR, fg=FG_COLOR)
-task_entry.pack()
-task_list = tk.Listbox(calendar_tab, width=50, height=10, bg=BTN_COLOR, fg=FG_COLOR)
-task_list.pack()
-tk.Button(calendar_tab, text="Hinzufügen", command=add_task, bg=BTN_COLOR, fg=FG_COLOR).pack()
-tk.Button(calendar_tab, text="Löschen", command=delete_task, bg=BTN_COLOR, fg=FG_COLOR).pack()
-points_label = tk.Label(calendar_tab, text=f"Punkte: {points}", bg=BG_COLOR, fg=FG_COLOR)
-points_label.pack()
+# Tab 1: Tasks
+calendar_tab = tk.Frame(notebook, bg=BG_COLOR)
+notebook.add(calendar_tab, text="Tasks")
 
-# Tab 2: Unerledigte Aufgaben
+# Header
+tk.Label(calendar_tab, text="Tasks", font=("Arial", 14, "bold"), bg=BG_COLOR, fg=FG_COLOR).pack(pady=5)
+
+# Tagesauswahl
+day_frame = tk.Frame(calendar_tab, bg=BG_COLOR)
+day_frame.pack(pady=5)
+date_labels = get_date_labels()
+for i, day_key in enumerate(["today", "tomorrow", "day_after"]):
+    tk.Button(
+        day_frame,
+        text=date_labels[i],
+        command=lambda d=day_key: select_day(d),
+        bg="#444444",
+        fg=FG_COLOR,
+        font=("Arial", 10),
+        width=12,
+        relief="flat"
+    ).pack(side=tk.LEFT, padx=5)
+
+# Aufgabenliste
+task_list = tk.Listbox(calendar_tab, width=40, height=8, bg=BTN_COLOR, fg=FG_COLOR, font=("Arial", 10))
+task_list.pack(pady=5)
+
+# Buttons für Aufgaben
+button_frame = tk.Frame(calendar_tab, bg=BG_COLOR)
+button_frame.pack(pady=5)
+tk.Button(button_frame, text="➕ Add", command=add_task, bg="#555555", fg=FG_COLOR, font=("Arial", 10), relief="flat").pack(side=tk.LEFT, padx=5)
+tk.Button(button_frame, text="❌ Delete", command=delete_task, bg="#555555", fg=FG_COLOR, font=("Arial", 10), relief="flat").pack(side=tk.LEFT, padx=5)
+tk.Button(button_frame, text="🔄 Refresh", command=reload_data, bg="#555555", fg=FG_COLOR, font=("Arial", 10), relief="flat").pack(side=tk.LEFT, padx=5)
+
+# Punkte-Anzeige
+points_label = tk.Label(calendar_tab, text=f"Points: {points}", bg=BG_COLOR, fg="#FFD700", font=("Arial", 12, "bold"))
+points_label.pack(pady=5)
+
+# Eingabefeld für Aufgaben
+task_entry = tk.Entry(calendar_tab, width=30, bg=BTN_COLOR, fg=FG_COLOR, font=("Arial", 10))
+task_entry.pack(pady=5)
+
+# Tab 2: Uncompleted Tasks
 uncompleted_tab = tk.Frame(notebook, bg=BG_COLOR)
-notebook.add(uncompleted_tab, text="Unerledigt")
-uncompleted_list = tk.Listbox(uncompleted_tab, width=50, height=15, bg=BTN_COLOR, fg=FG_COLOR)
-uncompleted_list.pack()
-tk.Button(uncompleted_tab, text="Aktualisieren", command=update_uncompleted_list, bg=BTN_COLOR, fg=FG_COLOR).pack()
+notebook.add(uncompleted_tab, text="Uncompleted")
+tk.Label(uncompleted_tab, text="Uncompleted Tasks", font=("Arial", 14, "bold"), bg=BG_COLOR, fg=FG_COLOR).pack(pady=5)
+uncompleted_list = tk.Listbox(uncompleted_tab, width=40, height=10, bg=BTN_COLOR, fg=FG_COLOR, font=("Arial", 10))
+uncompleted_list.pack(pady=5)
+tk.Button(uncompleted_tab, text="🔄 Refresh", command=update_uncompleted_list, bg="#555555", fg=FG_COLOR, font=("Arial", 10), relief="flat").pack(pady=5)
 
-# Tab 3: Wiederkehrende Aufgaben
+# Tab 3: Recurring Tasks
 recurring_tab = tk.Frame(notebook, bg=BG_COLOR)
-notebook.add(recurring_tab, text="Wiederkehrend")
-recurring_entry = tk.Entry(recurring_tab, width=30, bg=BTN_COLOR, fg=FG_COLOR)
-recurring_entry.pack()
-tk.Button(recurring_tab, text="Hinzufügen", command=add_recurring_task, bg=BTN_COLOR, fg=FG_COLOR).pack()
-recurring_task_list = tk.Listbox(recurring_tab, width=50, height=15, bg=BTN_COLOR, fg=FG_COLOR)
-recurring_task_list.pack()
-tk.Button(recurring_tab, text="Löschen", command=delete_recurring_task, bg=BTN_COLOR, fg=FG_COLOR).pack()
+notebook.add(recurring_tab, text="Recurring")
+tk.Label(recurring_tab, text="Recurring Tasks", font=("Arial", 14, "bold"), bg=BG_COLOR, fg=FG_COLOR).pack(pady=5)
+recurring_task_list = tk.Listbox(recurring_tab, width=40, height=10, bg=BTN_COLOR, fg=FG_COLOR, font=("Arial", 10))
+recurring_task_list.pack(pady=5)
+recurring_entry = tk.Entry(recurring_tab, width=30, bg=BTN_COLOR, fg=FG_COLOR, font=("Arial", 10))
+recurring_entry.pack(pady=5)
+tk.Button(recurring_tab, text="➕ Add", command=add_recurring_task, bg="#555555", fg=FG_COLOR, font=("Arial", 10), relief="flat").pack(pady=5)
+tk.Button(recurring_tab, text="❌ Delete", command=delete_recurring_task, bg="#555555", fg=FG_COLOR, font=("Arial", 10), relief="flat").pack(pady=5)
 
 # Tab 4: Shop
 shop_tab = tk.Frame(notebook, bg=BG_COLOR)
 notebook.add(shop_tab, text="Shop")
+tk.Label(shop_tab, text="Shop", font=("Arial", 14, "bold"), bg=BG_COLOR, fg=FG_COLOR).pack(pady=5)
 for reward in rewards:
-    tk.Button(shop_tab, text=f"{reward['name']} - {reward['cost']} Punkte", command=lambda r=reward: redeem_reward(r),
-              bg=BTN_COLOR, fg=FG_COLOR).pack()
+    tk.Button(
+        shop_tab,
+        text=f"{reward['name']} - {reward['cost']} Points",
+        command=lambda r=reward: redeem_reward(r),
+        bg="#444444",
+        fg=FG_COLOR,
+        font=("Arial", 10),
+        width=25,
+        relief="flat"
+    ).pack(pady=3)
 
-# Tab 5: Inventar & Verlauf
+# Tab 5: Inventory
 inventory_tab = tk.Frame(notebook, bg=BG_COLOR)
-notebook.add(inventory_tab, text="Inventar")
-inventory_list = tk.Listbox(inventory_tab, width=50, height=8, bg=BTN_COLOR, fg=FG_COLOR)
-inventory_list.pack()
-tk.Button(inventory_tab, text="Einlösen", command=redeem_inventory_item, bg=BTN_COLOR, fg=FG_COLOR).pack()
-tk.Label(inventory_tab, text="Verlauf:", bg=BG_COLOR, fg=FG_COLOR).pack(pady=5)
-redemption_list = tk.Listbox(inventory_tab, width=50, height=8, bg=BTN_COLOR, fg=FG_COLOR)
-redemption_list.pack()
+notebook.add(inventory_tab, text="Inventory")
+tk.Label(inventory_tab, text="Inventory", font=("Arial", 14, "bold"), bg=BG_COLOR, fg=FG_COLOR).pack(pady=5)
+inventory_list = tk.Listbox(inventory_tab, width=40, height=8, bg=BTN_COLOR, fg=FG_COLOR, font=("Arial", 10))
+inventory_list.pack(pady=5)
+tk.Button(inventory_tab, text="✅ Use", command=redeem_inventory_item, bg="#555555", fg=FG_COLOR, font=("Arial", 10), relief="flat").pack(pady=5)
+tk.Label(inventory_tab, text="History:", bg=BG_COLOR, fg=FG_COLOR, font=("Arial", 12, "bold")).pack(pady=5)
+redemption_list = tk.Listbox(inventory_tab, width=40, height=8, bg=BTN_COLOR, fg=FG_COLOR, font=("Arial", 10))
+redemption_list.pack(pady=5)
 
-# Lade Daten und starte App
-load_data()
-update_task_list()
-update_recurring_task_list()
-update_inventory()
-update_redemption_history()
-update_points()
+# Starte die App
 root.mainloop()

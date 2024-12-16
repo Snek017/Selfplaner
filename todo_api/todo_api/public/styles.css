@@ -1,0 +1,269 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+/* Body Styling */
+body {
+    background-color: #121212;
+    color: #ffffff;
+    line-height: 1.6;
+    padding: 20px;
+}
+
+/* Header */
+header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+header h1 {
+    color: #ffa726;
+    font-size: 2.5rem;
+}
+
+header .subtitle {
+    color: #d3d3d3;
+    font-size: 1.1rem;
+    margin-top: 5px;
+}
+
+/* Points Display */
+.points-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#points-display {
+    font-size: 1.5rem;
+    background: #1f1f1f;
+    padding: 10px;
+    border-radius: 8px;
+    display: inline-block;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Date Buttons */
+.date-buttons {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.date-button {
+    background-color: #333333;
+    color: #ffa726;
+    border: none;
+    padding: 10px 20px;
+    margin: 5px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.date-button:hover {
+    background-color: #ffa726;
+    color: #333333;
+}
+
+/* Main Content */
+.main-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+/* Card Styling */
+.card {
+    background: #1f1f1f;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card h2 {
+    margin-bottom: 15px;
+    color: #ffa726;
+    text-align: center;
+}
+
+/* Tasks List */
+.tasks-list {
+    background: #252525;
+    border-radius: 8px;
+    padding: 10px;
+    min-height: 100px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Recurring and Unfinished Tasks */
+.recurring-container,
+.unfinished-container {
+    background: #1f1f1f;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+    transition: transform 0.3s ease;
+}
+
+.recurring-container h2,
+.unfinished-container h2 {
+    margin-bottom: 15px;
+    color: #ffa726;
+    text-align: center;
+}
+
+.recurring-list,
+.unfinished-list {
+    background: #252525;
+    border-radius: 8px;
+    padding: 10px;
+    min-height: 100px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.recurring-list::-webkit-scrollbar,
+.unfinished-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.recurring-list::-webkit-scrollbar-thumb,
+.unfinished-list::-webkit-scrollbar-thumb {
+    background-color: #444444;
+    border-radius: 10px;
+}
+
+.task-input input {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 5px;
+    background-color: #2c2c2c;
+    color: #ffffff;
+    margin-right: 10px;
+}
+
+.task-input button {
+    background-color: #ffa726;
+    color: #333333;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.task-input button:hover {
+    background-color: #ff8f00;
+}
+
+
+.task-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #333333;
+    margin-bottom: 5px;
+    padding: 8px;
+    border-radius: 5px;
+}
+
+.task-box span {
+    cursor: pointer;
+}
+
+.delete-button {
+    background-color: #ff4c4c;
+    color: #ffffff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.delete-button:hover {
+    background-color: #ff0000;
+}
+
+/* Task Input */
+.task-input {
+    display: flex;
+    margin-top: 10px;
+}
+
+.task-input input {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 5px;
+    background-color: #2c2c2c;
+    color: #ffffff;
+    margin-right: 10px;
+}
+
+.primary-button {
+    background-color: #ffa726;
+    color: #333333;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.primary-button:hover {
+    background-color: #ff8f00;
+}
+
+/* Shop and Inventory Lists */
+.shop-list,
+.inventory-list {
+    background: #252525;
+    border-radius: 8px;
+    padding: 10px;
+    min-height: 100px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.shop-button {
+    background-color: #ffa726;
+    color: #333333;
+    border: none;
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 5px;
+    cursor: pointer;
+    display: block;
+    text-align: center;
+    transition: background-color 0.3s ease;
+}
+
+.shop-button:hover {
+    background-color: #ff8f00;
+}
+
+/* Scrollbar Styling */
+.tasks-list::-webkit-scrollbar,
+.shop-list::-webkit-scrollbar,
+.inventory-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tasks-list::-webkit-scrollbar-thumb,
+.shop-list::-webkit-scrollbar-thumb,
+.inventory-list::-webkit-scrollbar-thumb {
+    background-color: #444444;
+    border-radius: 10px;
+}
