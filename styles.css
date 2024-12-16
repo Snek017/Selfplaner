@@ -1,0 +1,193 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body Styling */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #121212; /* Darkmode Hintergrund */
+    color: #ffffff;
+    line-height: 1.5;
+    padding: 20px;
+}
+
+/* Headings */
+h1 {
+    text-align: center;
+    color: #ffa726; /* Akzentfarbe */
+    margin-bottom: 20px;
+}
+
+h2 {
+    color: #ffffff;
+    font-size: 20px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+h3 {
+    color: #ffa726;
+    font-size: 18px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+/* Box Styling */
+.box {
+    background: linear-gradient(135deg, #1e1e1e, #2b2b2b);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px auto;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+    max-width: 500px;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.box:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8);
+}
+
+/* Input Fields */
+input[type="text"] {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #444;
+    border-radius: 6px;
+    background-color: #1f1f1f;
+    color: #ffffff;
+    font-size: 14px;
+}
+
+/* Buttons */
+button {
+    background-color: #ffa726;
+    color: #121212;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+    background-color: #ff7043;
+    transform: translateY(-2px);
+}
+
+/* Lists */
+#tasks-list,
+#recurring-tasks-list,
+#inventory-list,
+#shop-list,
+#redemption-history {
+    list-style: none;
+    padding: 10px;
+    background-color: #1f1f1f;
+    border-radius: 6px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 10px;
+}
+
+#tasks-list div,
+#recurring-tasks-list div,
+#inventory-list div,
+#shop-list button,
+#redemption-history div {
+    margin-bottom: 10px;
+    padding: 10px;
+    background: linear-gradient(135deg, #2c2c2c, #1f1f1f);
+    border-radius: 6px;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Shop Button Specific Styling */
+.shop-button {
+    text-align: left;
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    background-color: #ffa726;
+    color: #121212;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.shop-button:hover {
+    background-color: #ff7043;
+    transform: scale(1.02);
+}
+
+/* Delete Button */
+.delete-button {
+    background-color: #e64a19;
+    color: #ffffff;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.delete-button:hover {
+    background-color: #ff7043;
+}
+
+/* Points Display */
+#points-display {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffffff;
+    margin: 10px 0;
+}
+
+/* Navigation Buttons for Dates */
+#date-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+#date-buttons button {
+    flex: 1;
+    margin: 5px;
+}
+
+/* Scrollable List Sections */
+#tasks-list::-webkit-scrollbar,
+#recurring-tasks-list::-webkit-scrollbar,
+#inventory-list::-webkit-scrollbar,
+#shop-list::-webkit-scrollbar,
+#redemption-history::-webkit-scrollbar {
+    width: 8px;
+}
+
+#tasks-list::-webkit-scrollbar-thumb,
+#recurring-tasks-list::-webkit-scrollbar-thumb,
+#inventory-list::-webkit-scrollbar-thumb,
+#shop-list::-webkit-scrollbar-thumb,
+#redemption-history::-webkit-scrollbar-thumb {
+    background-color: #ffa726;
+    border-radius: 4px;
+}
+
+#tasks-list::-webkit-scrollbar-track,
+#recurring-tasks-list::-webkit-scrollbar-track,
+#inventory-list::-webkit-scrollbar-track,
+#shop-list::-webkit-scrollbar-track,
+#redemption-history::-webkit-scrollbar-track {
+    background-color: #1f1f1f;
+}
